@@ -1,0 +1,1052 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#2d5a3d" />
+  <title>Pré-Natal SOAP — Offline + Nuvem</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icon.svg">
+
+  <style>
+    :root{
+      --bg1:#f0ede6; --bg2:#e8f0e9; --card:#fff; --border:#ece7df;
+      --text:#2d2820; --muted:#6b5f50; --muted2:#a89e8e;
+      --inp:#f7f5f0; --inpBorder:#d8d0c4; --focus:#7c9e87;
+      --accent:#2d5a3d; --accent2:#7c9e87;
+      --dangerBg:#fdf0f0; --dangerBorder:#f0b0b0; --dangerText:#8a2020;
+      --warnBg:#fdf5ec; --warnBorder:#e8c080; --warnText:#7a4010;
+      --okBg:#f0f8f2; --okBorder:#b0d8b8; --okText:#2d6040;
+      --shadow: 0 1px 8px rgba(0,0,0,.06);
+      --radius:16px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    [data-theme="dark"]{
+      --bg1:#0b110c; --bg2:#0b110c; --card:#121a12; --border:#1e2c1e;
+      --text:#d8eada; --muted:#587860; --muted2:#4a6450;
+      --inp:#0f160f; --inpBorder:#1e2c1e; --focus:#4a8c60;
+      --accent:#7cbf8a; --accent2:#4a8c60;
+      --dangerBg:#3a1414; --dangerBorder:#7a3030; --dangerText:#f09090;
+      --warnBg:#2a1c0c; --warnBorder:#6a4020; --warnText:#e0a060;
+      --okBg:#0f1c10; --okBorder:#2a5038; --okText:#5aaa6a;
+      --shadow:none;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:var(--sans);
+      color:var(--text);
+      background: linear-gradient(135deg,var(--bg1) 0%, var(--bg2) 100%);
+    }
+    .container{max-width:980px;margin:0 auto;padding:14px 14px 110px}
+    .topbar{
+      position:sticky; top:0; z-index:20;
+      background: rgba(255,255,255,.86);
+      backdrop-filter: blur(10px);
+      border-bottom:1px solid var(--border);
+    }
+    [data-theme="dark"] .topbar{background:rgba(14,20,14,.86)}
+    .topinner{max-width:980px;margin:0 auto;padding:10px 14px}
+    .title{display:flex;align-items:center;gap:12px}
+    .brand{font-weight:900; letter-spacing:.01em; font-size:18px;}
+    .sub{font-size:11px;color:var(--muted2);margin-top:2}
+    .spacer{flex:1}
+    .btn{
+      border:0; border-radius:12px; padding:10px 14px;
+      font-weight:800; cursor:pointer; font-size:13px;
+    }
+    .btn.primary{background:var(--accent); color:#fff}
+    .btn.ghost{background:transparent; border:2px solid var(--accent2); color:var(--accent)}
+    .btn.soft{background:var(--inp); border:1.5px solid var(--inpBorder); color:var(--text)}
+    .btn:active{transform:translateY(1px)}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .card{
+      background:var(--card); border:1px solid var(--border);
+      border-radius:var(--radius); padding:16px; box-shadow:var(--shadow);
+      margin-top:14px;
+    }
+    .grid{display:grid; gap:12px}
+    .grid.two{grid-template-columns: 1fr 1fr}
+    @media (max-width: 820px){ .grid.two{grid-template-columns: 1fr} }
+    label{display:block; font-size:11px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:6px}
+    input, textarea, select{
+      width:100%; background:var(--inp); color:var(--text);
+      border:1.5px solid var(--inpBorder); border-radius:12px;
+      padding:10px 12px; font-size:14px; outline:none;
+    }
+    textarea{min-height:90px; resize:vertical}
+    input:focus, textarea:focus, select:focus{border-color:var(--focus)}
+    .tabs{display:flex; gap:8px; overflow:auto; padding:10px 0 0}
+    .tab{
+      padding:9px 12px; border-radius:999px; border:1px solid var(--border);
+      background:transparent; cursor:pointer; font-weight:900; font-size:12px;
+      color:var(--muted);
+      white-space:nowrap;
+    }
+    .tab.active{background:var(--accent); color:#fff; border-color:var(--accent)}
+    .muted{color:var(--muted2)}
+    .pill{padding:6px 10px;border-radius:999px;background:var(--inp);border:1px solid var(--inpBorder);font-size:12px;font-weight:800}
+    .list{display:flex; flex-direction:column; gap:10px}
+    .item{
+      display:flex; align-items:center; gap:10px; padding:12px;
+      border-radius:14px; border:1px solid var(--border);
+      background:transparent;
+    }
+    .item:hover{border-color:var(--focus)}
+    .item .name{font-weight:900}
+    .item .meta{font-size:12px;color:var(--muted2);margin-top:2}
+    .badge{font-size:11px;font-weight:900;padding:4px 10px;border-radius:999px;border:1px solid var(--border);background:var(--inp)}
+    .danger{background:var(--dangerBg); border:1.5px solid var(--dangerBorder); color:var(--dangerText); border-radius:12px; padding:10px 12px; font-weight:800; font-size:12px; line-height:1.5}
+    .warn{background:var(--warnBg); border:1.5px solid var(--warnBorder); color:var(--warnText); border-radius:12px; padding:10px 12px; font-weight:800; font-size:12px; line-height:1.5}
+    .ok{background:var(--okBg); border:1.5px solid var(--okBorder); color:var(--okText); border-radius:12px; padding:10px 12px; font-weight:800; font-size:12px; line-height:1.5}
+    .mono{font-family:var(--mono)}
+    .footerbar{
+      position:fixed; left:0; right:0; bottom:0;
+      border-top:1px solid var(--border);
+      background: rgba(255,255,255,.90);
+      backdrop-filter: blur(10px);
+      padding:10px 14px;
+    }
+    [data-theme="dark"] .footerbar{background:rgba(14,20,14,.90)}
+    .footinner{max-width:980px;margin:0 auto;display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+    .small{font-size:11px}
+    .kpi{display:flex; gap:8px; flex-wrap:wrap}
+    .kpi .pill strong{color:var(--accent)}
+    .split{display:grid;grid-template-columns: 320px 1fr; gap:14px}
+    @media (max-width: 980px){ .split{grid-template-columns: 1fr} }
+    .help{font-size:12px;color:var(--muted2); line-height:1.55}
+    .hr{height:1px;background:var(--border);margin:14px 0}
+  </style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topinner">
+    <div class="title">
+      <div>
+        <div class="brand">Pré-Natal <span style="color:var(--accent)">SOAP</span> — Offline + Nuvem</div>
+        <div class="sub">GitHub Pages (PWA real): instalável + cache offline + sync opcional</div>
+      </div>
+      <div class="spacer"></div>
+      <button id="themeBtn" class="btn soft" title="Alternar tema">🌙</button>
+    </div>
+    <div class="tabs" id="tabs"></div>
+  </div>
+</div>
+
+<div class="container">
+  <div id="view"></div>
+</div>
+
+<div class="footerbar">
+  <div class="footinner">
+    <div class="kpi">
+      <span class="pill">Modo: <strong id="modeLbl">Offline</strong></span>
+      <span class="pill">Pacientes: <strong id="countPatients">0</strong></span>
+      <span class="pill">Status: <strong id="syncLbl">—</strong></span>
+    </div>
+    <div class="row">
+      <button id="cloudBtn" class="btn primary">☁️ Nuvem / Login</button>
+      <button id="exportAllBtn" class="btn soft">📦 Exportar backup</button>
+      <button id="importBtn" class="btn soft">⬆ Importar</button>
+      <input id="importFile" type="file" accept="application/json" style="display:none" />
+    </div>
+  </div>
+</div>
+
+<script>
+  // registra SW (PWA real no GitHub Pages)
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js").catch(console.error);
+    });
+  }
+</script>
+
+<script type="module">
+const APP_VERSION = "pages-1.0.0";
+const TABS = ["Pacientes","Consulta","SOAP","Config"];
+const ICONS = { Pacientes:"👤", Consulta:"🩺", SOAP:"📋", Config:"⚙️" };
+
+let SUPABASE_URL = localStorage.getItem("supabase_url") || "";
+let SUPABASE_KEY = localStorage.getItem("supabase_key") || "";
+let CRYPTO_ENABLED = localStorage.getItem("crypto_enabled") === "1";
+let CRYPTO_PASSPHRASE = localStorage.getItem("crypto_pass") || "";
+
+let supabase = null;
+let supaUser = null;
+
+function parseISODateAsUTC(iso){
+  if(!iso) return null;
+  const [y,m,d] = iso.split("-").map(Number);
+  if(!y||!m||!d) return null;
+  return new Date(Date.UTC(y,m-1,d,12,0,0));
+}
+function daysBetweenUTC(later,earlier){
+  return Math.floor((later.getTime()-earlier.getTime())/86400000);
+}
+function igFromDum(dumIso, refIso){
+  const dum = parseISODateAsUTC(dumIso);
+  const ref = parseISODateAsUTC(refIso);
+  if(!dum||!ref) return null;
+  const diff = daysBetweenUTC(ref,dum);
+  if(diff<0||diff>310) return null;
+  return { sem: Math.floor(diff/7), dias: diff%7, fonte:"DUM" };
+}
+function igFromUsg(usgDataIso, usgIgSem, usgIgDias, refIso){
+  const usgD = parseISODateAsUTC(usgDataIso);
+  const ref = parseISODateAsUTC(refIso);
+  if(!usgD||!ref) return null;
+  if(usgIgSem===""||usgIgSem==null) return null;
+  const diasDesde = daysBetweenUTC(ref,usgD);
+  if(diasDesde<0) return null;
+  const total = Number(usgIgSem)*7 + Number(usgIgDias||0) + diasDesde;
+  if(!Number.isFinite(total)||total<0) return null;
+  return { sem: Math.floor(total/7), dias: total%7, fonte:"USG" };
+}
+function calcDpp(ig, refIso){
+  const ref = parseISODateAsUTC(refIso) || new Date();
+  const restante = 280 - (ig.sem*7 + ig.dias);
+  const d = new Date(ref);
+  d.setUTCDate(d.getUTCDate()+restante);
+  return d.toLocaleDateString("pt-BR");
+}
+function getTrim(sem){ if(sem<=13) return 1; if(sem<=27) return 2; return 3; }
+function fmtDateBR(iso){
+  if(!iso) return "—";
+  const d = parseISODateAsUTC(iso);
+  return d ? d.toLocaleDateString("pt-BR") : iso;
+}
+function uid(){
+  return crypto.randomUUID ? crypto.randomUUID() :
+    "xxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c=>{
+      const r = (Math.random()*16)|0;
+      const v = c==="x"?r:(r&0x3|0x8);
+      return v.toString(16);
+    });
+}
+
+// IndexedDB
+const DB_NAME = "prenatal_soap_db";
+const DB_VER = 1;
+let db;
+
+function openDB(){
+  return new Promise((resolve,reject)=>{
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = () => {
+      const d = req.result;
+      if(!d.objectStoreNames.contains("patients")) {
+        const st = d.createObjectStore("patients", { keyPath: "id" });
+        st.createIndex("updated_at", "updated_at");
+      }
+    };
+    req.onsuccess = ()=> resolve(req.result);
+    req.onerror = ()=> reject(req.error);
+  });
+}
+function tx(store, mode="readonly"){
+  const t = db.transaction(store, mode);
+  return t.objectStore(store);
+}
+async function listPatients(){
+  return new Promise((resolve,reject)=>{
+    const r = tx("patients").getAll();
+    r.onsuccess=()=> resolve(r.result||[]);
+    r.onerror=()=> reject(r.error);
+  });
+}
+async function upsertPatient(p){
+  p.updated_at = new Date().toISOString();
+  return new Promise((resolve,reject)=>{
+    const r = tx("patients","readwrite").put(p);
+    r.onsuccess=()=> resolve(true);
+    r.onerror=()=> reject(r.error);
+  });
+}
+async function deletePatient(id){
+  return new Promise((resolve,reject)=>{
+    const r = tx("patients","readwrite").delete(id);
+    r.onsuccess=()=> resolve(true);
+    r.onerror=()=> reject(r.error);
+  });
+}
+
+// Crypto opcional
+async function sha256(text){
+  const enc = new TextEncoder().encode(text);
+  const buf = await crypto.subtle.digest("SHA-256", enc);
+  return new Uint8Array(buf);
+}
+async function deriveKey(pass){
+  const hash = await sha256(pass);
+  return crypto.subtle.importKey("raw", hash, {name:"AES-GCM"}, false, ["encrypt","decrypt"]);
+}
+function b64(buf){ return btoa(String.fromCharCode(...new Uint8Array(buf))); }
+function unb64(str){ return Uint8Array.from(atob(str), c=>c.charCodeAt(0)); }
+
+async function encryptJSON(obj){
+  if(!CRYPTO_ENABLED) return obj;
+  if(!CRYPTO_PASSPHRASE) throw new Error("Criptografia ativada mas sem senha.");
+  const key = await deriveKey(CRYPTO_PASSPHRASE);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const plaintext = new TextEncoder().encode(JSON.stringify(obj));
+  const cipher = await crypto.subtle.encrypt({name:"AES-GCM", iv}, key, plaintext);
+  return { __enc: 1, iv: b64(iv), data: b64(cipher) };
+}
+async function decryptJSON(obj){
+  if(!obj || !obj.__enc) return obj;
+  if(!CRYPTO_PASSPHRASE) throw new Error("Dados criptografados: informe a senha.");
+  const key = await deriveKey(CRYPTO_PASSPHRASE);
+  const iv = unb64(obj.iv);
+  const data = unb64(obj.data);
+  const plain = await crypto.subtle.decrypt({name:"AES-GCM", iv}, key, data);
+  return JSON.parse(new TextDecoder().decode(plain));
+}
+
+// UI
+const $ = (q)=> document.querySelector(q);
+const view = $("#view");
+const tabsEl = $("#tabs");
+const modeLbl = $("#modeLbl");
+const countPatients = $("#countPatients");
+const syncLbl = $("#syncLbl");
+const cloudBtn = $("#cloudBtn");
+const exportAllBtn = $("#exportAllBtn");
+const importBtn = $("#importBtn");
+const importFile = $("#importFile");
+const themeBtn = $("#themeBtn");
+
+let state = {
+  tab: 0,
+  theme: localStorage.getItem("theme") || "light",
+  patients: [],
+  selectedPatientId: null,
+  selectedVisitId: null,
+  consult: emptyConsult(),
+};
+
+function emptyConsult(){
+  return {
+    id: null,
+    data: new Date().toISOString().slice(0,10),
+    igFonte:"dum",
+    dum:"",
+    usgData:"",
+    usgIgSem:"",
+    usgIgDias:"",
+    queixas:"",
+    hpma:"",
+    antecedentes:"",
+    medsUso:"",
+    peso:"",
+    pa:"",
+    fc:"",
+    temp:"",
+    au:"",
+    bcf:"",
+    avaliacao:"",
+    plano:"",
+    prescricao:"",
+  };
+}
+
+function setTheme(t){
+  state.theme = t;
+  document.documentElement.setAttribute("data-theme", t==="dark" ? "dark" : "light");
+  localStorage.setItem("theme", t);
+  themeBtn.textContent = t==="dark" ? "☀️" : "🌙";
+}
+setTheme(state.theme);
+
+// Toast
+let toastTimer=null;
+function toast(msg, kind="ok"){
+  const el = document.createElement("div");
+  el.className = kind==="danger" ? "danger" : kind==="warn" ? "warn" : "ok";
+  el.style.position="fixed";
+  el.style.left="14px";
+  el.style.right="14px";
+  el.style.bottom="90px";
+  el.style.maxWidth="980px";
+  el.style.margin="0 auto";
+  el.style.zIndex="99";
+  el.textContent = msg;
+  document.body.appendChild(el);
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>{ el.remove(); }, 2600);
+}
+
+// SOAP engine
+function buildSOAP(p, visit){
+  const refDate = visit.data || new Date().toISOString().slice(0,10);
+  const igD = igFromDum(visit.dum, refDate);
+  const igU = igFromUsg(visit.usgData, visit.usgIgSem, visit.usgIgDias, refDate);
+  const ig = visit.igFonte === "usg" && igU ? igU : igD;
+  const igStr = ig ? `${ig.sem}s${ig.dias}d` : "—";
+  const trim = ig ? getTrim(ig.sem) : null;
+  const dpp = ig ? calcDpp(ig, refDate) : "—";
+
+  const s = [
+    `Paciente: ${p.nome||"—"} (${p.idade||"—"}a)`,
+    p.prontuario ? `Prontuário: ${p.prontuario}` : null,
+    ig ? `IG: ${igStr} (${ig.fonte}) · DPP: ${dpp} · ${trim}ºT` : null,
+    visit.queixas ? `Queixas: ${visit.queixas}` : null,
+    visit.hpma ? `HPMA: ${visit.hpma}` : null,
+    visit.antecedentes ? `Antecedentes: ${visit.antecedentes}` : null,
+    visit.medsUso ? `Medicamentos em uso: ${visit.medsUso}` : null,
+  ].filter(Boolean).join("\n");
+
+  const o = [
+    [visit.peso&&`Peso: ${visit.peso} kg`, visit.pa&&`PA: ${visit.pa} mmHg`, visit.fc&&`FC: ${visit.fc} bpm`, visit.temp&&`Temp: ${visit.temp} °C`].filter(Boolean).join(" | "),
+    [visit.au&&`AU: ${visit.au} cm`, visit.bcf&&`BCF: ${visit.bcf} bpm`].filter(Boolean).join(" | "),
+  ].filter(Boolean).join("\n");
+
+  const a = visit.avaliacao || (ig ? `Gestação tópica, ${igStr}, ${trim}º trimestre, pela ${ig.fonte}.` : "—");
+
+  const ptxt = [
+    visit.prescricao ? `Prescrição:\n${visit.prescricao}` : null,
+    visit.plano ? `Plano / Conduta:\n${visit.plano}` : null,
+  ].filter(Boolean).join("\n\n") || "—";
+
+  const full = [
+    `CONSULTA PRÉ-NATAL — ${fmtDateBR(refDate)}`,
+    "",
+    "══ S — SUBJETIVO ══",
+    s || "—",
+    "",
+    "══ O — OBJETIVO ══",
+    o || "—",
+    "",
+    "══ A — AVALIAÇÃO ══",
+    a || "—",
+    "",
+    "══ P — PLANO ══",
+    ptxt || "—",
+    "",
+    `— Gerado: Pré-Natal SOAP (GitHub Pages PWA ${APP_VERSION}) —`,
+  ].join("\n");
+
+  return { ig, igStr, trim, dpp, full };
+}
+
+// DOM helpers
+function h(tag, attrs={}, children=[]){
+  const el = document.createElement(tag);
+  for(const [k,v] of Object.entries(attrs||{})){
+    if(k==="class") el.className=v;
+    else if(k==="html") el.innerHTML=v;
+    else if(k.startsWith("on") && typeof v==="function") el.addEventListener(k.slice(2).toLowerCase(), v);
+    else if(v===false || v==null) {}
+    else el.setAttribute(k,v);
+  }
+  for(const c of (Array.isArray(children)?children:[children])){
+    if(c==null) continue;
+    if(typeof c==="string") el.appendChild(document.createTextNode(c));
+    else el.appendChild(c);
+  }
+  return el;
+}
+function renderTabs(){
+  tabsEl.innerHTML = "";
+  for(let i=0;i<TABS.length;i++){
+    const t = TABS[i];
+    const b = h("button",{class:"tab"+(state.tab===i?" active":""), onClick:()=>{state.tab=i; render();}}, [`${ICONS[t]} ${t}`]);
+    tabsEl.appendChild(b);
+  }
+}
+function updateFooter(){
+  countPatients.textContent = String(state.patients.length);
+  modeLbl.textContent = supaUser ? "Nuvem" : "Offline";
+}
+
+// Views
+function render(){
+  renderTabs();
+  updateFooter();
+  view.innerHTML = "";
+  if(state.tab===0) return renderPatients();
+  if(state.tab===1) return renderConsult();
+  if(state.tab===2) return renderSOAPView();
+  if(state.tab===3) return renderConfig();
+}
+
+function renderPatients(){
+  const left = h("div", {class:"card"}, [
+    h("div", {class:"row"}, [
+      h("div", {}, [
+        h("div", {style:"font-weight:900;font-size:16px"}, ["Pacientes"]),
+        h("div", {class:"muted small"}, ["Crie e selecione pacientes. Offline + sync opcional."]),
+      ]),
+      h("div", {style:"margin-left:auto"}, [
+        h("button", {class:"btn primary", onClick: ()=> newPatient()}, ["＋ Novo"]),
+      ]),
+    ]),
+    h("div", {style:"margin-top:12px"}, [
+      h("input", {id:"search", placeholder:"Buscar por nome / prontuário...", onInput: (e)=> filterPatients(e.target.value)}),
+    ]),
+    h("div", {class:"hr"}, []),
+    h("div", {id:"plist", class:"list"}, []),
+  ]);
+
+  const right = h("div", {class:"card"}, [
+    h("div", {style:"font-weight:900;font-size:16px"}, ["Detalhes"]),
+    h("div", {class:"muted small", style:"margin-top:6px"}, ["Selecione um paciente para ver/editar."]),
+    h("div", {id:"pdetail", style:"margin-top:12px"}, []),
+  ]);
+
+  view.appendChild(h("div",{class:"split"},[left,right]));
+  paintPatientList(state.patients);
+  paintPatientDetail(state.selectedPatientId);
+}
+
+function filterPatients(q){
+  const qq = (q||"").toLowerCase().trim();
+  const filtered = !qq ? state.patients : state.patients.filter(p=>{
+    return (p.nome||"").toLowerCase().includes(qq) || (p.prontuario||"").toLowerCase().includes(qq);
+  });
+  paintPatientList(filtered);
+}
+
+function paintPatientList(list){
+  const el = document.querySelector("#plist");
+  el.innerHTML = "";
+  if(!list.length){
+    el.appendChild(h("div",{class:"muted small"},["Nenhum paciente ainda. Clique em “Novo”."]));
+    return;
+  }
+  for(const p of list){
+    const it = h("div",{class:"item", style: state.selectedPatientId===p.id ? "border-color: var(--focus)" : ""},[
+      h("div",{},[
+        h("div",{class:"name"},[p.nome||"—"]),
+        h("div",{class:"meta"},[
+          `${p.prontuario?`Prontuário ${p.prontuario} · `:""}Atualizado: ${new Date(p.updated_at||Date.now()).toLocaleString("pt-BR")}`
+        ])
+      ]),
+      h("div",{style:"margin-left:auto;display:flex;gap:8px;align-items:center"},[
+        h("span",{class:"badge"},[`${(p.visits||[]).length} consultas`]),
+        h("button",{class:"btn soft", onClick:(e)=>{ e.stopPropagation(); state.selectedPatientId=p.id; state.tab=1; state.consult = emptyConsult(); render(); }},["Abrir"]),
+      ])
+    ]);
+    it.addEventListener("click", ()=>{ state.selectedPatientId=p.id; state.selectedVisitId=null; paintPatientDetail(p.id); });
+    el.appendChild(it);
+  }
+}
+
+let dirtyTimer=null;
+function markDirty(p){
+  clearTimeout(dirtyTimer);
+  dirtyTimer=setTimeout(async ()=>{
+    await upsertPatient(p);
+    state.patients = (await listPatients()).sort((a,b)=> (Date.parse(b.updated_at||"")-Date.parse(a.updated_at||"")));
+    paintPatientList(state.patients);
+    updateFooter();
+    if(supaUser) await syncNow();
+  }, 350);
+}
+
+function paintPatientDetail(id){
+  const el = document.querySelector("#pdetail");
+  el.innerHTML = "";
+  if(!id){ el.appendChild(h("div",{class:"muted small"},["—"])); return; }
+  const p = state.patients.find(x=>x.id===id);
+  if(!p){ el.appendChild(h("div",{class:"muted small"},["Paciente não encontrado."])); return; }
+
+  const vCount = (p.visits||[]).length;
+
+  el.appendChild(h("div",{class:"grid two"},[
+    h("div",{},[
+      h("label",{},["Nome"]),
+      h("input",{value:p.nome||"", onInput:(e)=>{ p.nome=e.target.value; markDirty(p);} })
+    ]),
+    h("div",{},[
+      h("label",{},["Idade"]),
+      h("input",{type:"number", value:p.idade||"", onInput:(e)=>{ p.idade=e.target.value; markDirty(p);} })
+    ]),
+    h("div",{},[
+      h("label",{},["Prontuário"]),
+      h("input",{value:p.prontuario||"", onInput:(e)=>{ p.prontuario=e.target.value; markDirty(p);} })
+    ]),
+    h("div",{},[
+      h("label",{},["Observações"]),
+      h("input",{value:p.obs||"", onInput:(e)=>{ p.obs=e.target.value; markDirty(p);} })
+    ]),
+  ]));
+
+  el.appendChild(h("div",{class:"hr"}));
+  el.appendChild(h("div",{class:"row"},[
+    h("span",{class:"pill"},[`Consultas: `, h("strong",{style:"color:var(--accent)"},[String(vCount)])]),
+    h("span",{class:"pill"},[`ID: `, h("span",{class:"mono"},[p.id])]),
+  ]));
+
+  el.appendChild(h("div",{class:"row", style:"margin-top:12px"},[
+    h("button",{class:"btn primary", onClick:()=>{ state.selectedPatientId=p.id; state.consult = emptyConsult(); state.tab=1; render(); }},["🩺 Nova consulta"]),
+    h("button",{class:"btn soft", onClick:()=>{ if(confirm("Excluir paciente e todas as consultas?")) removePatient(p.id); }},["🗑 Excluir"]),
+  ]));
+
+  if(vCount){
+    el.appendChild(h("div",{class:"hr"}));
+    el.appendChild(h("div",{style:"font-weight:900"},["Consultas anteriores"]));
+    el.appendChild(h("div",{class:"list", style:"margin-top:10px"}, (p.visits||[])
+      .slice()
+      .sort((a,b)=> (b.data||"").localeCompare(a.data||""))
+      .map(v=>{
+        const soap = buildSOAP(p,v);
+        return h("div",{class:"item"},[
+          h("div",{},[
+            h("div",{class:"name"},[`📅 ${fmtDateBR(v.data)} · ${soap.igStr}`]),
+            h("div",{class:"meta"},[(v.queixas||"—").slice(0,120)]),
+          ]),
+          h("div",{style:"margin-left:auto;display:flex;gap:8px"},[
+            h("button",{class:"btn soft", onClick:(e)=>{ e.stopPropagation(); state.selectedVisitId=v.id; state.tab=2; render(); }},["Ver SOAP"]),
+          ])
+        ]);
+      })
+    ));
+  }
+}
+
+async function newPatient(){
+  const p = { id: uid(), nome:"", idade:"", prontuario:"", obs:"", visits:[], updated_at:new Date().toISOString() };
+  await upsertPatient(p);
+  state.patients = (await listPatients()).sort((a,b)=> (Date.parse(b.updated_at||"")-Date.parse(a.updated_at||"")));
+  state.selectedPatientId = p.id;
+  toast("Paciente criado.", "ok");
+  render();
+}
+async function removePatient(id){
+  await deletePatient(id);
+  state.patients = (await listPatients()).sort((a,b)=> (Date.parse(b.updated_at||"")-Date.parse(a.updated_at||"")));
+  if(state.selectedPatientId===id) state.selectedPatientId=null;
+  toast("Paciente removido.", "warn");
+  render();
+}
+
+function renderConsult(){
+  const p = state.patients.find(x=>x.id===state.selectedPatientId);
+  if(!p){
+    view.appendChild(h("div",{class:"card"},[
+      h("div",{class:"danger"},["Selecione um paciente em Pacientes."]),
+      h("button",{class:"btn primary", style:"margin-top:12px", onClick:()=>{state.tab=0; render();}},["Ir para Pacientes"])
+    ]));
+    return;
+  }
+
+  const refDate = state.consult.data;
+  const igD = igFromDum(state.consult.dum, refDate);
+  const igU = igFromUsg(state.consult.usgData, state.consult.usgIgSem, state.consult.usgIgDias, refDate);
+  const ig = state.consult.igFonte==="usg" && igU ? igU : igD;
+  const igStr = ig ? `${ig.sem}s${ig.dias}d` : "—";
+  const dpp = ig ? calcDpp(ig, refDate) : "—";
+
+  const card = h("div",{class:"card"},[
+    h("div",{class:"row"},[
+      h("div",{},[
+        h("div",{style:"font-weight:900;font-size:16px"},[`🩺 Consulta — ${p.nome||"Paciente"}`]),
+        h("div",{class:"muted small"},[`Data: ${fmtDateBR(refDate)} · IG: ${igStr} · DPP: ${dpp}`]),
+      ]),
+      h("div",{style:"margin-left:auto;display:flex;gap:8px"},[
+        h("button",{class:"btn soft", onClick:()=>{ state.tab=0; render(); }},["Voltar"]),
+        h("button",{class:"btn primary", onClick:()=> saveVisit(p)},["Salvar consulta ✓"]),
+      ])
+    ]),
+    h("div",{class:"hr"}),
+    h("div",{class:"grid two"},[
+      f("Data da consulta","data","date"),
+      sel("Calcular IG por","igFonte",[
+        ["dum","DUM"],
+        ["usg","USG 1º trimestre"]
+      ], true)
+    ]),
+    state.consult.igFonte==="dum"
+      ? h("div",{class:"grid two", style:"margin-top:12px"},[
+          f("DUM","dum","date"),
+          ro("Resultado", igD ? `${igD.sem}s${igD.dias}d · DPP ${calcDpp(igD, refDate)}` : "—")
+        ])
+      : h("div",{style:"margin-top:12px"},[
+          h("div",{class:"help"},["Informe a IG medida na data da USG (11–14s)."]),
+          h("div",{class:"grid", style:"grid-template-columns: 1fr 120px 120px; margin-top:10px"},[
+            f("Data USG","usgData","date"),
+            f("Semanas","usgIgSem","number"),
+            f("+ Dias","usgIgDias","number"),
+          ]),
+          h("div",{style:"margin-top:10px"},[ ro("Resultado", igU ? `${igU.sem}s${igU.dias}d · DPP ${calcDpp(igU, refDate)}` : "—") ])
+        ]),
+    h("div",{class:"hr"}),
+
+    area("Queixas","queixas"),
+    area("HPMA","hpma"),
+    area("Antecedentes","antecedentes"),
+    area("Medicamentos em uso","medsUso"),
+
+    h("div",{class:"hr"}),
+    h("div",{class:"grid two"},[
+      f("Peso (kg)","peso","number"),
+      f("PA (mmHg)","pa","text","110/70"),
+      f("FC (bpm)","fc","number"),
+      f("Temp (°C)","temp","number"),
+      f("AU (cm)","au","number"),
+      f("BCF (bpm)","bcf","number"),
+    ]),
+    h("div",{class:"hr"}),
+    area("Avaliação","avaliacao"),
+    area("Plano / Conduta","plano"),
+    area("Prescrição","prescricao"),
+    h("div",{class:"hr"}),
+    h("div",{class:"row"},[
+      h("button",{class:"btn ghost", onClick:()=>{ state.tab=2; state.selectedVisitId=null; render(); }},["Ver SOAP"]),
+      h("span",{class:"muted small"},["Salve para entrar no histórico do paciente."])
+    ])
+  ]);
+
+  view.appendChild(card);
+
+  function f(label, key, type="text", placeholder=""){
+    return h("div",{},[
+      h("label",{},[label]),
+      h("input",{type, value: state.consult[key]||"", placeholder,
+        onInput:(e)=>{ state.consult[key]=e.target.value; if(key==="data"||key==="igFonte"||key==="dum"||key==="usgData"||key==="usgIgSem"||key==="usgIgDias") render(); }
+      })
+    ]);
+  }
+  function area(label, key){
+    return h("div",{},[
+      h("label",{},[label]),
+      h("textarea",{value: state.consult[key]||"", onInput:(e)=>{ state.consult[key]=e.target.value; }})
+    ]);
+  }
+  function ro(label, val){
+    return h("div",{},[
+      h("label",{},[label]),
+      h("input",{value: val, disabled:true})
+    ]);
+  }
+  function sel(label, key, opts, rerender=false){
+    return h("div",{},[
+      h("label",{},[label]),
+      h("select",{value: state.consult[key], onChange:(e)=>{ state.consult[key]=e.target.value; if(rerender) render(); }},
+        opts.map(([v,txt])=> h("option",{value:v},[txt]))
+      )
+    ]);
+  }
+}
+
+async function saveVisit(p){
+  const v = structuredClone(state.consult);
+  v.id = uid();
+  v.created_at = new Date().toISOString();
+  p.visits = (p.visits||[]);
+  p.visits.push(v);
+  await upsertPatient(p);
+  state.patients = (await listPatients()).sort((a,b)=> (Date.parse(b.updated_at||"")-Date.parse(a.updated_at||"")));
+  toast("Consulta salva.", "ok");
+  if(supaUser) await syncNow();
+  render();
+}
+
+function renderSOAPView(){
+  const p = state.patients.find(x=>x.id===state.selectedPatientId);
+  if(!p){
+    view.appendChild(h("div",{class:"card"},[
+      h("div",{class:"danger"},["Selecione um paciente."]),
+      h("button",{class:"btn primary", style:"margin-top:12px", onClick:()=>{state.tab=0; render();}},["Ir para Pacientes"])
+    ]));
+    return;
+  }
+  const visit = state.selectedVisitId ? (p.visits||[]).find(v=>v.id===state.selectedVisitId) : state.consult;
+  const soap = buildSOAP(p, visit);
+
+  view.appendChild(h("div",{class:"card"},[
+    h("div",{class:"row"},[
+      h("div",{},[
+        h("div",{style:"font-weight:900;font-size:16px"},[`📋 SOAP — ${p.nome||"Paciente"}`]),
+        h("div",{class:"muted small"},[`Data: ${fmtDateBR(visit.data)} · IG: ${soap.igStr} · DPP: ${soap.dpp}`]),
+      ]),
+      h("div",{style:"margin-left:auto;display:flex;gap:8px"},[
+        h("button",{class:"btn soft", onClick:()=>{ state.tab=1; render(); }},["Voltar"]),
+        h("button",{class:"btn primary", onClick:()=> copyText(soap.full)},["Copiar"]),
+        h("button",{class:"btn ghost", onClick:()=> downloadText(soap.full, p, visit)},["Baixar .txt"]),
+      ])
+    ]),
+    h("div",{class:"hr"}),
+    h("label",{},["SOAP completo"]),
+    h("textarea",{class:"mono", style:"min-height:320px", readonly:true},[soap.full]),
+    h("div",{class:"help", style:"margin-top:10px"},[
+      "⚠️ Parte médica avançada (alertas, exames, meds) será inserida/validada no Claude com suas 3 fontes."
+    ])
+  ]));
+}
+
+function copyText(text){
+  navigator.clipboard.writeText(text);
+  toast("Copiado.", "ok");
+}
+function downloadText(text, p, visit){
+  const blob = new Blob([text], {type:"text/plain;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `soap_${(p.nome||"paciente").replace(/\s+/g,"_")}_${visit.data||new Date().toISOString().slice(0,10)}.txt`;
+  a.click();
+}
+
+// Supabase
+function hasCloudConfig(){ return Boolean(SUPABASE_URL && SUPABASE_KEY); }
+async function loadSupabase(){
+  if(supabase) return supabase;
+  const mod = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm");
+  supabase = mod.createClient(SUPABASE_URL, SUPABASE_KEY);
+  return supabase;
+}
+async function cloudLogin(email, password){
+  const sb = await loadSupabase();
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  if(error) throw error;
+  supaUser = data.user;
+}
+async function cloudSignup(email, password){
+  const sb = await loadSupabase();
+  const { data, error } = await sb.auth.signUp({ email, password });
+  if(error) throw error;
+  supaUser = data.user;
+}
+async function cloudLogout(){
+  if(!supabase) return;
+  await supabase.auth.signOut();
+  supaUser = null;
+}
+async function cloudUpsertPatients(patients){
+  if(!supabase || !supaUser) return;
+  const rows = [];
+  for(const p of patients){
+    const payload = await encryptJSON(p);
+    rows.push({ id: p.id, owner: supaUser.id, payload, updated_at: p.updated_at });
+  }
+  const { error } = await supabase.from("patients").upsert(rows, { onConflict: "id" });
+  if(error) throw error;
+}
+async function cloudFetchPatients(){
+  if(!supabase || !supaUser) return [];
+  const { data, error } = await supabase.from("patients").select("id,payload,updated_at").order("updated_at", { ascending: false });
+  if(error) throw error;
+  const out = [];
+  for(const row of (data||[])){
+    let p = row.payload;
+    p = await decryptJSON(p);
+    p.updated_at = row.updated_at || p.updated_at || new Date().toISOString();
+    out.push(p);
+  }
+  return out;
+}
+function mergePatients(localList, cloudList){
+  const map = new Map();
+  for(const p of localList) map.set(p.id, p);
+  for(const p of cloudList){
+    const cur = map.get(p.id);
+    if(!cur) map.set(p.id, p);
+    else {
+      const t1 = Date.parse(cur.updated_at||"");
+      const t2 = Date.parse(p.updated_at||"");
+      map.set(p.id, (t2>t1) ? p : cur);
+    }
+  }
+  return Array.from(map.values()).sort((a,b)=> (Date.parse(b.updated_at||"") - Date.parse(a.updated_at||"")));
+}
+async function syncNow(){
+  if(!supabase || !supaUser){
+    syncLbl.textContent = "Offline";
+    return;
+  }
+  try{
+    syncLbl.textContent = "Sincronizando…";
+    const cloud = await cloudFetchPatients();
+    const merged = mergePatients(state.patients, cloud);
+    for(const p of merged) await upsertPatient(p);
+    state.patients = merged;
+    await cloudUpsertPatients(merged);
+    syncLbl.textContent = "OK";
+  }catch(e){
+    console.error(e);
+    syncLbl.textContent = "Erro";
+    toast("Falha ao sincronizar. Ver Config.", "warn");
+  }
+  render();
+}
+
+// SQL helper
+function getSQL(){
+  return `create table if not exists public.patients (
+  id uuid primary key,
+  owner uuid not null,
+  payload jsonb not null,
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists patients_owner_idx on public.patients(owner);
+
+alter table public.patients enable row level security;
+
+create policy "patients_select_own" on public.patients
+  for select using (auth.uid() = owner);
+
+create policy "patients_insert_own" on public.patients
+  for insert with check (auth.uid() = owner);
+
+create policy "patients_update_own" on public.patients
+  for update using (auth.uid() = owner) with check (auth.uid() = owner);
+
+create policy "patients_delete_own" on public.patients
+  for delete using (auth.uid() = owner);`;
+}
+
+function renderConfig(){
+  view.appendChild(h("div",{class:"card"},[
+    h("div",{style:"font-weight:900;font-size:16px"},["⚙️ Config — Nuvem (Supabase)"]),
+    h("div",{class:"muted small", style:"margin-top:6px"},["Para acessar de qualquer máquina, configure e faça login."]),
+    h("div",{class:"hr"}),
+    h("div",{class:"grid two"},[
+      h("div",{},[
+        h("label",{},["Supabase URL"]),
+        h("input",{value: SUPABASE_URL, placeholder:"https://xxxxx.supabase.co", onInput:(e)=>{ SUPABASE_URL=e.target.value.trim(); }})
+      ]),
+      h("div",{},[
+        h("label",{},["Supabase anon key"]),
+        h("input",{value: SUPABASE_KEY, placeholder:"eyJhbGciOi...", onInput:(e)=>{ SUPABASE_KEY=e.target.value.trim(); }})
+      ]),
+    ]),
+    h("div",{class:"row", style:"margin-top:12px"},[
+      h("button",{class:"btn primary", onClick:()=> saveCloudConfig()},["Salvar configuração"]),
+      h("button",{class:"btn soft", onClick:()=> prompt("SQL (copie/cole no Supabase SQL Editor):", getSQL())},["SQL da tabela"]),
+      h("button",{class:"btn ghost", onClick:()=> syncNow()},["Sincronizar agora"]),
+    ]),
+    h("div",{class:"hr"}),
+    h("div",{style:"font-weight:900"},["Login"]),
+    h("div",{class:"grid two", style:"margin-top:10px"},[
+      h("div",{},[ h("label",{},["Email"]), h("input",{id:"email", placeholder:"seu@email.com"}) ]),
+      h("div",{},[ h("label",{},["Senha"]), h("input",{id:"pass", type:"password", placeholder:"••••••••"}) ]),
+    ]),
+    h("div",{class:"row", style:"margin-top:12px"},[
+      h("button",{class:"btn primary", onClick:()=> doLogin()},["Entrar"]),
+      h("button",{class:"btn ghost", onClick:()=> doSignup()},["Criar conta"]),
+      h("button",{class:"btn soft", onClick:()=> doLogout()},["Sair"]),
+    ]),
+    h("div",{class:"hr"}),
+    h("div",{style:"font-weight:900"},["Criptografia (opcional)"]),
+    h("div",{class:"warn"},["Se ativar, os dados enviados à nuvem ficam cifrados no navegador (AES-GCM). Guarde a senha."]),
+    h("div",{class:"grid two", style:"margin-top:10px"},[
+      h("div",{},[
+        h("label",{},["Ativar criptografia"]),
+        h("select",{id:"cryptoOn"},[
+          h("option",{value:"0", selected: !CRYPTO_ENABLED},["Não"]),
+          h("option",{value:"1", selected: CRYPTO_ENABLED},["Sim"]),
+        ])
+      ]),
+      h("div",{},[
+        h("label",{},["Senha"]),
+        h("input",{id:"cryptoPass", type:"password", placeholder:"mínimo 8 caracteres"}),
+      ])
+    ]),
+    h("div",{class:"row", style:"margin-top:12px"},[
+      h("button",{class:"btn primary", onClick:()=> saveCrypto()},["Salvar criptografia"]),
+    ]),
+  ]));
+
+  function saveCloudConfig(){
+    localStorage.setItem("supabase_url", SUPABASE_URL);
+    localStorage.setItem("supabase_key", SUPABASE_KEY);
+    supabase=null; supaUser=null;
+    toast("Config salva. Faça login para sincronizar.", "ok");
+    syncLbl.textContent = "Offline";
+    render();
+  }
+  async function doLogin(){
+    try{
+      if(!hasCloudConfig()) return toast("Configure Supabase antes.", "warn");
+      const email = (document.querySelector("#email").value||"").trim();
+      const pass = (document.querySelector("#pass").value||"").trim();
+      if(!email||!pass) return toast("Informe email e senha.", "warn");
+      await cloudLogin(email, pass);
+      toast("Logado. Sincronizando…", "ok");
+      await syncNow();
+    }catch(e){
+      console.error(e);
+      toast(e?.message || "Erro no login.", "danger");
+    }
+  }
+  async function doSignup(){
+    try{
+      if(!hasCloudConfig()) return toast("Configure Supabase antes.", "warn");
+      const email = (document.querySelector("#email").value||"").trim();
+      const pass = (document.querySelector("#pass").value||"").trim();
+      if(!email||!pass) return toast("Informe email e senha.", "warn");
+      await cloudSignup(email, pass);
+      toast("Conta criada. Sincronizando…", "ok");
+      await syncNow();
+    }catch(e){
+      console.error(e);
+      toast(e?.message || "Erro ao criar conta.", "danger");
+    }
+  }
+  async function doLogout(){
+    await cloudLogout();
+    toast("Saiu da conta.", "warn");
+    syncLbl.textContent = "Offline";
+    render();
+  }
+  function saveCrypto(){
+    const on = (document.querySelector("#cryptoOn").value||"0")==="1";
+    const pass = (document.querySelector("#cryptoPass").value||"").trim();
+    if(on && pass.length < 8) return toast("Senha muito curta.", "warn");
+    localStorage.setItem("crypto_enabled", on ? "1":"0");
+    if(on) localStorage.setItem("crypto_pass", pass); else localStorage.removeItem("crypto_pass");
+    CRYPTO_ENABLED = on;
+    CRYPTO_PASSPHRASE = on ? pass : "";
+    toast("Criptografia salva.", "ok");
+  }
+}
+
+// Backup import/export
+exportAllBtn.onclick = async ()=>{
+  const all = await listPatients();
+  const blob = new Blob([JSON.stringify({ version: APP_VERSION, patients: all }, null, 2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `prenatal_backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  toast("Backup exportado.", "ok");
+};
+importBtn.onclick = ()=> importFile.click();
+importFile.onchange = async (e)=>{
+  const f = e.target.files?.[0];
+  if(!f) return;
+  try{
+    const txt = await f.text();
+    const j = JSON.parse(txt);
+    const list = j.patients || [];
+    if(!Array.isArray(list)) throw new Error("Arquivo inválido.");
+    for(const p of list) await upsertPatient(p);
+    state.patients = (await listPatients()).sort((a,b)=> (Date.parse(b.updated_at||"")-Date.parse(a.updated_at||"")));
+    toast("Importado com sucesso.", "ok");
+    if(supaUser) await syncNow();
+    render();
+  }catch(err){
+    console.error(err);
+    toast("Falha ao importar.", "danger");
+  }finally{
+    importFile.value="";
+  }
+};
+
+// Events & boot
+themeBtn.onclick = ()=> setTheme(state.theme==="dark" ? "light" : "dark");
+cloudBtn.onclick = ()=> { state.tab=3; render(); };
+
+db = await openDB();
+state.patients = (await listPatients()).sort((a,b)=> (Date.parse(b.updated_at||"")-Date.parse(a.updated_at||"")));
+syncLbl.textContent = "Offline";
+render();
+</script>
+</body>
+</html>
